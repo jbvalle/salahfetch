@@ -183,11 +183,12 @@ int main(void){
     // free input stream
     fclose(input); input = NULL;
 
+    system("echo '\e[1;93m' && cat /home/strayker/Coding/044_prayertimes/train.txt");
     
-    RED; printf("\n   +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
-    RED; printf("   | %-7s | %-7s | %-7s | %-7s | %-7s | %-7s |\n", "FAJR", "SHURUK", "DHUHR", "ASR", "MAGHRIB", "ISHA");RESET_COLOUR;
-    RED; printf("   +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
-    RED; printf("   | ");
+    RED; printf(" +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
+    RED; printf(" | %-7s | %-7s | %-7s | %-7s | %-7s | %-7s |\n", "FAJR", "SHURUK", "DHUHR", "ASR", "MAGHRIB", "ISHA");RESET_COLOUR;
+    RED; printf(" +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
+    RED; printf(" | ");
     WHT; printf("%-7s ", prayer_times.prayer.fajr);
     RED; printf("| ");
     WHT; printf("%-7s ", prayer_times.prayer.shuruk);
@@ -200,6 +201,6 @@ int main(void){
     RED; printf("| ");
     WHT; printf("%-7s ", prayer_times.prayer.isha);
     RED; printf("| ");RESET_COLOUR;
-    RED; printf("\n   +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
+    RED; printf("\n +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
     return 0;
 }
