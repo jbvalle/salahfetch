@@ -4,8 +4,12 @@
 #include <time.h>
 
 #define RESET_COLOUR    printf("\033[0m")
-#define RED printf("\e[1;93m")
-#define WHT printf("\e[1;97m")
+#define CRESET printf("\e[0m")
+#define BG printf("\e[0;103m")
+#define YEL printf("\e[1;93m")
+#define WHT printf("\e[1;90m")
+//#define RED printf("\e[1;97m")
+#define RED printf("\e[1;97m")
 
 // Struct for storing current prayer times
 typedef struct salah_t{
@@ -16,6 +20,7 @@ typedef struct salah_t{
     char asr[6];
     char maghrib[6];
     char isha[6];
+    int prayer_nums[6];
 }salah_t;
 
 
@@ -70,52 +75,66 @@ int parse_prayerstimes(prayers_t *prayer_times, FILE *input, date_t date){
 
             // Fetch 3. Token -> Shuruk
             case 1 :
-
                 strcpy(prayer_times->prayer.fajr, token);
                 break;
 
                 // Fetch 3. Token -> Shuruk
             case 2 :
-
                 strcpy(prayer_times->prayer.shuruk, token);
                 break;
 
                 // Fetch 4. Token -> Dhuhr
             case 3 :
-
                 strcpy(prayer_times->prayer.dhuhr, token);
                 break;
 
-                // Fetch 5. Token -> Asr
+                // Fetch 5. Token -> Asr}
             case 4 :
-
                 strcpy(prayer_times->prayer.asr, token);
                 break;
 
                 // Fetch 6. Token -> Maghrib
             case 5 :
-
                 strcpy(prayer_times->prayer.maghrib, token);
                 break;
 
                 // Fetch 6. Token -> Isha
             case 6 :
-
                 strcpy(prayer_times->prayer.isha, token);
                 break;
         }
         token = strtok(NULL, seperator);
+    }
+    return 0;
 }
 
-// Run through buffer until token is null
-while(token != NULL){
+void determine_prayer_num(prayers_t *prayer_times){
 
-    printf("%s ", token);
+    int hour, min;
 
+    // Fajr Val
+    sscanf(prayer_times->prayer.fajr, "%d:%d", &hour, &min);
+    prayer_times->prayer.prayer_nums[0] = hour * 60 + min;
 
-    printf("\n");
-}
-return 0;
+    // Shuruk Val
+    sscanf(prayer_times->prayer.shuruk, "%d:%d", &hour, &min);
+    prayer_times->prayer.prayer_nums[1] = hour * 60 + min;
+
+    // Dhuhr Val
+    sscanf(prayer_times->prayer.dhuhr, "%d:%d", &hour, &min);
+    prayer_times->prayer.prayer_nums[2] = hour * 60 + min;
+
+    // Asr Val
+    sscanf(prayer_times->prayer.asr, "%d:%d", &hour, &min);
+    prayer_times->prayer.prayer_nums[3] = hour * 60 + min;
+
+    // Maghrib Val
+    sscanf(prayer_times->prayer.maghrib, "%d:%d", &hour, &min);
+    prayer_times->prayer.prayer_nums[4] = hour * 60 + min;
+
+    // isha Val
+    sscanf(prayer_times->prayer.isha, "%d:%d", &hour, &min);
+    prayer_times->prayer.prayer_nums[5] = hour * 60 + min;
 }
 
 void parseFilename(char *rel_filename, date_t *date){
@@ -123,7 +142,6 @@ void parseFilename(char *rel_filename, date_t *date){
     // Fetch current Date
     time_t now;
     struct tm *current;
-
 
     /* Get the current time. */
     time(&now);
@@ -147,7 +165,7 @@ void parseFilename(char *rel_filename, date_t *date){
         "12.csv"};
 
     // Define source directory of CSV files 
-    strcpy(rel_filename, "/home/strayker/Coding/044_prayertimes/ibntaimiaCSV/") ; strcat(rel_filename, months[current->tm_mon]);
+    strcpy(rel_filename, "/home/strayker/.config/salahfetch/") ; strcat(rel_filename, months[current->tm_mon]);
 
     //YEAR  : current->tm_year + 1900
     //MONTH : current->tm_mon  + 1
@@ -157,6 +175,63 @@ void parseFilename(char *rel_filename, date_t *date){
     date->current_year  = current->tm_year + 1900;
     date->current_hour  = current->tm_hour;
     date->current_min   = current->tm_min;
+}
+
+int showTable(prayers_t prayer_times, date_t date){
+
+
+    // Calculate a integer number from the current time
+    int current_time_num = date.current_hour * 60 + date.current_min;
+
+    /*****************************/
+    /** Output And Format Table **/
+    /*****************************/
+
+    system("echo '\e[1;93m' && cat /home/strayker/Coding/044_prayertimes/train.txt");
+
+    YEL; 
+    printf(" +---------+---------+---------+---------+---------+---------+\n"); 
+    printf(" | %-7s | %-7s | %-7s | %-7s | %-7s | %-7s |\n", "FAJR", "SHURUK", "DHUHR", "ASR", "MAGHRIB", "ISHA"); 
+    printf(" +---------+---------+---------+---------+---------+---------+\n"); 
+    RESET_COLOUR;
+
+    YEL; printf(" | ");
+
+    ((current_time_num > prayer_times.prayer.prayer_nums[0])&&
+     (current_time_num < prayer_times.prayer.prayer_nums[1])) ? YEL : WHT;
+
+    printf("%-7s ", prayer_times.prayer.fajr);
+
+    YEL; printf("| ");
+    ((current_time_num > prayer_times.prayer.prayer_nums[1])&&
+     (current_time_num < prayer_times.prayer.prayer_nums[2])) ? RED : WHT;
+    printf("%-7s ", prayer_times.prayer.shuruk);
+
+    YEL; printf("| ");
+    ((current_time_num > prayer_times.prayer.prayer_nums[2])&&
+     (current_time_num < prayer_times.prayer.prayer_nums[3])) ? RED : WHT;
+    printf("%-7s ", prayer_times.prayer.dhuhr);
+
+    YEL; printf("| ");
+    ((current_time_num > prayer_times.prayer.prayer_nums[3])&&
+     (current_time_num < prayer_times.prayer.prayer_nums[4])) ? RED : WHT;
+    printf("%-7s ", prayer_times.prayer.asr);
+
+    YEL; printf("| ");
+    ((current_time_num > prayer_times.prayer.prayer_nums[4])&&
+     (current_time_num < prayer_times.prayer.prayer_nums[5])) ? RED : WHT;
+    printf("%-7s ", prayer_times.prayer.maghrib);
+
+    YEL; printf("| ");
+    ((current_time_num > prayer_times.prayer.prayer_nums[5])) ? RED : WHT;
+    printf("%-7s ", prayer_times.prayer.isha); CRESET;
+
+    YEL; printf("| "); printf("\n +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
+
+    YEL; printf(" |\n "); 
+    WHT; printf("+--- %02d.%02d.%4d", date.current_day, date.current_month, date.current_year);
+
+    return 0;
 }
 
 int main(void){
@@ -183,24 +258,11 @@ int main(void){
     // free input stream
     fclose(input); input = NULL;
 
-    system("echo '\e[1;93m' && cat /home/strayker/Coding/044_prayertimes/train.txt");
-    
-    RED; printf(" +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
-    RED; printf(" | %-7s | %-7s | %-7s | %-7s | %-7s | %-7s |\n", "FAJR", "SHURUK", "DHUHR", "ASR", "MAGHRIB", "ISHA");RESET_COLOUR;
-    RED; printf(" +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
-    RED; printf(" | ");
-    WHT; printf("%-7s ", prayer_times.prayer.fajr);
-    RED; printf("| ");
-    WHT; printf("%-7s ", prayer_times.prayer.shuruk);
-    RED; printf("| ");
-    WHT; printf("%-7s ", prayer_times.prayer.dhuhr);
-    RED; printf("| ");
-    WHT; printf("%-7s ", prayer_times.prayer.asr);
-    RED; printf("| ");
-    WHT; printf("%-7s ", prayer_times.prayer.maghrib);
-    RED; printf("| ");
-    WHT; printf("%-7s ", prayer_times.prayer.isha);
-    RED; printf("| ");RESET_COLOUR;
-    RED; printf("\n +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
+    // Calculate an int number from each prayer time
+    determine_prayer_num(&prayer_times);
+
+    // Display formatted prayer times
+    showTable(prayer_times, date);
+
     return 0;
 }
