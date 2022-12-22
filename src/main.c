@@ -32,6 +32,9 @@ typedef struct date_t{
     int current_year;
     int current_hour;
     int current_min;
+    int hijri_day;
+    int hijri_month;
+    int hijri_year;
 }date_t;
 
 // Main struct for storing prayer times and current date
@@ -106,6 +109,20 @@ int parse_prayerstimes(prayers_t *prayer_times, FILE *input, date_t date){
         token = strtok(NULL, seperator);
     }
     return 0;
+}
+
+void retrieve_hijri_date(prayers_t *prayer_times){
+    
+    char buff[20];
+    FILE *fp = popen("hijra_cal", "r");
+    fgets(buff, sizeof(buff), fp);
+
+    sscanf(buff, "%d-%d-%d", 
+            &prayer_times->current_date.hijri_day,
+            &prayer_times->current_date.hijri_month,
+            &prayer_times->current_date.hijri_year);
+
+    pclose(fp); fp = NULL;
 }
 
 void determine_prayer_num(prayers_t *prayer_times){
@@ -186,46 +203,70 @@ int showTable(prayers_t prayer_times, date_t date){
     /** Output And Format Table **/
     /*****************************/
 
-    system("ascii-image-converter /home/strayker/Pictures/salafetch/logo.png --color -b -d 65,20");
+    system("ascii-image-converter /home/strayker/Pictures/salafetch/logo.png --color --complex -b -d 65,20");
 
     YEL; 
+    printf("\n"); 
+
     printf(" +---------+---------+---------+---------+---------+---------+\n"); 
     printf(" | %-7s | %-7s | %-7s | %-7s | %-7s | %-7s |\n", "FAJR", "SHURUK", "DHUHR", "ASR", "MAGHRIB", "ISHA"); 
     printf(" +---------+---------+---------+---------+---------+---------+\n"); 
+
     RESET_COLOUR;
 
     YEL; printf(" | ");
-
     ((current_time_num > prayer_times.prayer.prayer_nums[0])&&
      (current_time_num < prayer_times.prayer.prayer_nums[1])) ? YEL : WHT;
+    printf("%-6s ", prayer_times.prayer.fajr);
 
-    printf("%-7s ", prayer_times.prayer.fajr);
-
-    YEL; printf("| ");
+    YEL; printf(" | ");
     ((current_time_num > prayer_times.prayer.prayer_nums[1])&&
      (current_time_num < prayer_times.prayer.prayer_nums[2])) ? RED : WHT;
-    printf("%-7s ", prayer_times.prayer.shuruk);
+    printf("%-6s ", prayer_times.prayer.shuruk);
 
-    YEL; printf("| ");
+    YEL; printf(" | ");
     ((current_time_num > prayer_times.prayer.prayer_nums[2])&&
      (current_time_num < prayer_times.prayer.prayer_nums[3])) ? RED : WHT;
-    printf("%-7s ", prayer_times.prayer.dhuhr);
+    printf("%-6s ", prayer_times.prayer.dhuhr);
 
-    YEL; printf("| ");
+    YEL; printf(" | ");
     ((current_time_num > prayer_times.prayer.prayer_nums[3])&&
      (current_time_num < prayer_times.prayer.prayer_nums[4])) ? RED : WHT;
-    printf("%-7s ", prayer_times.prayer.asr);
+    printf("%-6s ", prayer_times.prayer.asr);
 
-    YEL; printf("| ");
+    YEL; printf(" | ");
     ((current_time_num > prayer_times.prayer.prayer_nums[4])&&
      (current_time_num < prayer_times.prayer.prayer_nums[5])) ? RED : WHT;
-    printf("%-7s ", prayer_times.prayer.maghrib);
+    printf("%-6s ", prayer_times.prayer.maghrib);
 
-    YEL; printf("| ");
+    YEL; printf(" | ");
     ((current_time_num > prayer_times.prayer.prayer_nums[5])) ? RED : WHT;
-    printf("%-7s ", prayer_times.prayer.isha); CRESET;
+    printf("%-6s ", prayer_times.prayer.isha); CRESET;
 
-    YEL; printf("| "); printf("\n +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
+    YEL; printf(" |\n");
+    printf(" +---------+---------+---------+---------+---------+---------+\n"); 
+    RESET_COLOUR;
+
+    YEL; 
+    printf(" | %-7s |", "Hijri"); RESET_COLOUR;
+    WHT; printf("    %02d-%02d-%4d     ", 
+            prayer_times.current_date.hijri_day,
+            prayer_times.current_date.hijri_month,
+            prayer_times.current_date.hijri_year); 
+
+    YEL; 
+    printf("| %-7s |", "Greg"); RESET_COLOUR;
+    WHT; printf("    %02d-%02d-%4d     ", 
+            prayer_times.current_date.current_day,
+            prayer_times.current_date.current_month,
+            prayer_times.current_date.current_year); 
+    YEL; 
+    printf("|"); RESET_COLOUR;
+
+    YEL; 
+    printf("\n"); 
+
+    printf(" +---------+---------+---------+---------+---------+---------+\n"); 
 
 
     return 0;
@@ -258,8 +299,11 @@ int main(void){
     // Calculate an int number from each prayer time
     determine_prayer_num(&prayer_times);
 
+    retrieve_hijri_date(&prayer_times);
+
     // Display formatted prayer times
     showTable(prayer_times, date);
+
 
     return 0;
 }
