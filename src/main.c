@@ -182,12 +182,11 @@ int showTable(prayers_t prayer_times, date_t date){
 
     // Calculate a integer number from the current time
     int current_time_num = date.current_hour * 60 + date.current_min;
-
     /*****************************/
     /** Output And Format Table **/
     /*****************************/
 
-    system("echo '\e[1;93m' && cat /home/strayker/Coding/044_prayertimes/train.txt");
+    system("ascii-image-converter /home/strayker/Pictures/salafetch/logo.png --color -b -d 65,20");
 
     YEL; 
     printf(" +---------+---------+---------+---------+---------+---------+\n"); 
@@ -228,8 +227,6 @@ int showTable(prayers_t prayer_times, date_t date){
 
     YEL; printf("| "); printf("\n +---------+---------+---------+---------+---------+---------+\n"); RESET_COLOUR;
 
-    YEL; printf(" |\n "); 
-    WHT; printf("+--- %02d.%02d.%4d", date.current_day, date.current_month, date.current_year);
 
     return 0;
 }
