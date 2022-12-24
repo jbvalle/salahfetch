@@ -1,3 +1,3 @@
-![screenshot](https://raw.githubusercontent.com/jbvalle/salahfetch/main/dep/salahfetch.png?raw=true)
+![screenshot](https://github.com/jbvalle/salahfetch/blob/main/dep/salahfetch.png?raw=true)
 
 
