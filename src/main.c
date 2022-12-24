@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #define RESET_COLOUR    printf("\033[0m")
 #define CRESET printf("\e[0m")
@@ -10,6 +11,9 @@
 #define WHT printf("\e[1;90m")
 //#define RED printf("\e[1;97m")
 #define RED printf("\e[1;97m")
+
+// Intervall Api Access
+#define API_INTERVALL 40
 
 // Struct for storing current prayer times
 typedef struct salah_t{
@@ -23,6 +27,10 @@ typedef struct salah_t{
     int prayer_nums[6];
 }salah_t;
 
+typedef struct weather_t{
+    double tmp;
+    char info[28];
+}weather_t;
 
 // Struct for temporarily storing date information
 typedef struct date_t{
@@ -40,6 +48,7 @@ typedef struct date_t{
 // Main struct for storing prayer times and current date
 typedef struct prayers_t{
 
+    weather_t weather;
     date_t current_date;
     salah_t prayer;
 }prayers_t;
@@ -92,27 +101,27 @@ int parse_prayerstimes(prayers_t *prayer_times, FILE *input, date_t date){
                 break;
 
                 // Fetch 5. Token -> Asr}
-            case 4 :
+        case 4 :
                 strcpy(prayer_times->prayer.asr, token);
                 break;
 
                 // Fetch 6. Token -> Maghrib
-            case 5 :
+        case 5 :
                 strcpy(prayer_times->prayer.maghrib, token);
                 break;
 
                 // Fetch 6. Token -> Isha
-            case 6 :
+        case 6 :
                 strcpy(prayer_times->prayer.isha, token);
                 break;
-        }
-        token = strtok(NULL, seperator);
     }
-    return 0;
+    token = strtok(NULL, seperator);
+}
+return 0;
 }
 
 void retrieve_hijri_date(prayers_t *prayer_times){
-    
+
     char buff[20];
     FILE *fp = popen("hijra_cal", "r");
     fgets(buff, sizeof(buff), fp);
@@ -123,6 +132,160 @@ void retrieve_hijri_date(prayers_t *prayer_times){
             &prayer_times->current_date.hijri_year);
 
     pclose(fp); fp = NULL;
+}
+
+// If the return value is 0 this indicates that API access is allowed
+// If the return value is other than 0 this mean that no API call should be made
+int check_last_api_access(prayers_t *prayer_times){
+
+    char filepath[] = "/home/strayker/.config/weather/last_access\0";
+
+    FILE *fp = fopen(filepath, "a+");
+
+    // Error handling checking valid file pointer
+    if(fp == NULL){
+
+        fprintf(stderr, "ERROR Reading Weather File");
+        return -1;
+    }
+
+    
+    //Check if file is empty
+    //If it is empty overwrite it with the current time and exit 
+    struct stat st;
+    if((stat(filepath, &st) == 0) && (st.st_size == 0)){
+
+        printf("Weather Last Access File is empty");
+
+        // Overwrite the content
+        fprintf(fp, "%d:%d", 
+                prayer_times->current_date.current_hour,
+                prayer_times->current_date.current_min);
+
+
+        fclose(fp); fp = NULL;
+        // If the file has not been created before the current time is written to it and 0 is returned meaning api access is permitted
+        return 0;
+    }
+
+    // Read File
+    char buff[100]; fgets(buff, sizeof(buff), fp);
+    int hour, min, diff;
+
+    // Parse hour and min from file
+    sscanf(buff, "%d:%d", &hour, &min);
+
+    // Determine Difference is greater than XX min
+    diff = (prayer_times->current_date.current_hour * 60 + prayer_times->current_date.current_min) - (hour * 60 + min);
+
+    // If the difference is smaller than the API intervall do nothing and exist
+    if(diff <= API_INTERVALL){
+
+        fclose(fp); fp = NULL;
+        return -1;
+    }
+
+    // If the diff is bigger than the API Intervall than overwrite the file by repositioning the pointer and overwrite current time
+    // reposition the file pointer /to the beginning of the file
+    //(void)fseek(fp, 0, SEEK_SET) ;
+    fp = fopen(filepath, "w+");
+
+    // Overwrite the content
+    fprintf(fp, "%d:%d", 
+            prayer_times->current_date.current_hour,
+            prayer_times->current_date.current_min);
+                
+    fclose(fp); fp = NULL;
+    return 0;
+}
+
+int retrieve_weather(prayers_t *prayer_times){
+
+
+    FILE *fp = NULL;
+    char proc_buff[50];
+    char weather_info_filepath[] = "/home/strayker/.config/weather/info\0";
+
+    // if check() == 0 -> make an API CALL otherwise just read the info file
+    if(check_last_api_access(prayer_times) == 0){
+        
+        // Retrieve the return value of the weather process
+        FILE *proc_ptr = popen("get_weather", "r");
+        fgets(proc_buff, sizeof(proc_buff), proc_ptr);
+        pclose(proc_ptr); proc_ptr = NULL;
+
+        // If API Call is valid create the file with rw permissions and 
+        fp = fopen(weather_info_filepath, "w+");
+        // Write the get_weather process output to info file 
+        fprintf(fp, "%s", proc_buff); fclose(fp); fp = NULL;
+
+        // reassign file pointer to same file but with read permission
+        fp = fopen(weather_info_filepath, "r+");
+
+    }else{
+
+        // Create file pointer to info file in order to read it
+        fp = fopen(weather_info_filepath, "a+");
+
+        // Error handling checking valid file pointer
+        if(fp == NULL){
+
+            fprintf(stderr, "ERROR Reading Weather File");
+            return -1;
+        }
+
+        struct stat st;
+        if((stat(weather_info_filepath, &st) == 0) && (st.st_size == 0)){
+
+            printf("Weather Info File is empty");
+
+            // Overwrite the content
+            fprintf(fp, "0, API Call necessary");
+
+            fclose(fp); fp = NULL;
+            fp = fopen(weather_info_filepath, "r+");
+        }
+    }
+
+    //Initialize tmp and info values
+    prayer_times->weather.tmp = 9999;
+    for(int i = 0;i < (int)sizeof(prayer_times->weather.info); i++){
+
+        prayer_times->weather.info[i] = '\0';
+    }
+
+    // Token for strok
+    // tmp for buffer for strtok
+    // seperator for delimiter for strtok
+    char *token, buff[100], seperator[3] = ",\n";
+    char letter;
+
+    // Read first line of input stream to dump header
+    fgets(buff, sizeof(buff), fp);
+
+    // Read First token of string
+    token = strtok(buff, seperator); 
+
+    // Parse the tokens and save prayer times
+    for(int i = 0; (token != NULL ) && (i < 30); i++){
+
+        // First argument -> min TMP
+        if(i == 0)sscanf(token, "%lf", &prayer_times->weather.tmp);
+        // Second argument -> max TMP
+        if(i == 1){
+
+            for(int j = 0; ((letter = token[j]) != '\0') && (j < 30 ); j++){
+
+                prayer_times->weather.info[j] = letter;
+            }
+        }
+        token = strtok(NULL, seperator);
+    }
+
+    fclose(fp); fp = NULL;
+
+    return 0;
+
 }
 
 void determine_prayer_num(prayers_t *prayer_times){
@@ -268,6 +431,15 @@ int showTable(prayers_t prayer_times, date_t date){
 
     printf(" +---------+---------+---------+---------+---------+---------+\n"); 
 
+    printf(" | %-7s |", "Temp"); RESET_COLOUR;
+    WHT; printf(" %04.1f°C  ", prayer_times.weather.tmp);
+
+    YEL; printf("| %-7s |", "Weather"); RESET_COLOUR;
+    WHT; printf(" %-28s", prayer_times.weather.info);
+    YEL; printf("|");
+
+    printf("\n +---------+---------+---------+---------+---------+---------+\n"); 
+    RESET_COLOUR;
 
     return 0;
 }
@@ -301,9 +473,10 @@ int main(void){
 
     retrieve_hijri_date(&prayer_times);
 
+    retrieve_weather(&prayer_times);
+
     // Display formatted prayer times
     showTable(prayer_times, date);
-
 
     return 0;
 }

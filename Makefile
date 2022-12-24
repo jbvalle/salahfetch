@@ -17,7 +17,7 @@ OBJ = $(patsubst $(SRC_DIR)/%.c, $(SRC_DIR)/$(OBJ_DIR)/%.o, $(SRC))
 # Targets
 TARGET = prayer_times
 
-all: $(OBJ) $(TARGET)
+all: $(OBJ) $(TARGET) update_ctags
 
 $(SRC_DIR)/$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c | mkobj
 	$(CC) $(CFLAGS) -c -o $@ $^
@@ -26,7 +26,7 @@ $(TARGET) : $(OBJ) | mkdeb
 	$(CC) $(CFLAGS) -o $@ $^
 
 leaks:
-	valgrind --leak-check=full --track-origins=yes ./$(TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(TARGET)
 
 run : FORCE
 	./$(TARGET)
@@ -36,6 +36,12 @@ mkobj : FORCE
 
 mkdeb: FORCE
 	mkdir -p $(DEB_DIR)
+
+update_ctags : FORCE
+	ctags -R *
+
+api_call:
+	rm /home/strayker/.config/weather/info && get_weather > /home/strayker/.config/weather/info
 
 
 clean: FORCE
