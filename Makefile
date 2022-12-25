@@ -7,7 +7,7 @@ INC_DIR = inc
 DEB_DIR = debug
 
 # Compiler Flags
-CFLAGS = -g -Wall -Wextra
+CFLAGS = -g -Wall -Wextra -I./inc
 
 # Files
 SRC = $(wildcard $(SRC_DIR)/*.c)
