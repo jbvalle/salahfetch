@@ -43,6 +43,9 @@ update_ctags : FORCE
 api_call:
 	rm /home/strayker/.config/weather/info && get_weather > /home/strayker/.config/weather/info
 
+reset:
+	rm /home/strayker/.config/weather/last_access
+
 
 clean: FORCE
 	rm -rf $(DEB_DIR) $(SRC_DIR)/$(OBJ_DIR)
