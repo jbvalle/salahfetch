@@ -155,7 +155,10 @@ int check_last_api_access(prayers_t *prayer_times){
     struct stat st;
     if((stat(filepath, &st) == 0) && (st.st_size == 0)){
 
-        printf("Weather Last Access File is empty");
+        WHT;
+        printf("Info: last_access File was not found\n");
+        printf("Info: new last_access File is being generated, API_CALL will be initiated\n");
+        RESET_COLOUR;
 
         // Overwrite the content
         fprintf(fp, "%d:%d", 
@@ -176,7 +179,7 @@ int check_last_api_access(prayers_t *prayer_times){
     sscanf(buff, "%d:%d", &hour, &min);
 
     // Determine Difference is greater than XX min
-    diff = (prayer_times->current_date.current_hour * 60 + prayer_times->current_date.current_min) - (hour * 60 + min);
+    diff = abs((prayer_times->current_date.current_hour * 60 + prayer_times->current_date.current_min) - (hour * 60 + min));
 
     // If the difference is smaller than the API intervall do nothing and exist
     if(diff <= API_INTERVALL){
@@ -213,7 +216,11 @@ int retrieve_weather(prayers_t *prayer_times){
         FILE *proc_ptr = popen("get_weather", "r");
         fgets(proc_buff, sizeof(proc_buff), proc_ptr);
         pclose(proc_ptr); proc_ptr = NULL;
-
+    
+        WHT;
+        printf("Info: API Call initiated, minimum API period exceeded\n");
+        RESET_COLOUR;
+        
         // If API Call is valid create the file with rw permissions and 
         fp = fopen(weather_info_filepath, "w+");
         // Write the get_weather process output to info file 
@@ -237,7 +244,10 @@ int retrieve_weather(prayers_t *prayer_times){
         struct stat st;
         if((stat(weather_info_filepath, &st) == 0) && (st.st_size == 0)){
 
-            printf("Weather Info File is empty");
+            WHT;
+            printf("\nInfo: info file was not found\n");
+            printf("\nInfo: API call needs to be manually initiated - \nExecute: prayer_times API_CALL\n");
+            RESET_COLOUR;
 
             // Overwrite the content
             fprintf(fp, "0, API Call necessary");
@@ -444,8 +454,16 @@ int showTable(prayers_t prayer_times, date_t date){
     return 0;
 }
 
-int main(void){
+int main(int argc, char **argv){
 
+
+    // Manual API Call Initiation 
+    char api_call_make[] = "make -f /home/strayker/Coding/044_prayertimes/Makefile api_call\0";
+    
+    if((argc > 1)&&(strcmp(argv[1], "API_CALL") == 0)){
+
+        system(api_call_make);
+    }
 
     // Instantiate prayer_times for storing 5 prayer times of the day
     prayers_t prayer_times;
