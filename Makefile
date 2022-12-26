@@ -7,7 +7,7 @@ INC_DIR = inc
 DEB_DIR = debug
 
 # Compiler Flags
-CFLAGS = -g -Wall -Wextra
+CFLAGS = -g -Wall -Wextra -I$(INC_DIR)
 
 # Files
 SRC = $(wildcard $(SRC_DIR)/*.c)
@@ -40,9 +40,11 @@ mkdeb: FORCE
 update_ctags : FORCE
 	ctags -R *
 
-api_call:
+api_call: FORCE
 	rm /home/strayker/.config/weather/info && get_weather > /home/strayker/.config/weather/info
 
+hijri_api_call: FORCE
+	rm /home/strayker/.config/hijri_cal/info && hijra_cal > /home/strayker/.config/hijri_cal/info
 
 clean: FORCE
 	rm -rf $(DEB_DIR) $(SRC_DIR)/$(OBJ_DIR)
