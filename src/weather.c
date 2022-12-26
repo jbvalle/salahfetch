@@ -6,6 +6,17 @@
 // If the return value is other than 0 this mean that no API call should be made
 int check_last_api_access_weather(prayers_t *prayer_times){
 
+    // Check if internet connectivity exists
+    int internet_conn = system("ping -c 1 google.com > /dev/null 2>&1");
+    // If return_val = 0 -> internet connectivity exists , otherwise not and process terminates
+    int return_val = (internet_conn == 0) ? 0 : -1;
+    // terminate if there is no internet connectivity 
+    if(return_val != 0){
+
+        return return_val;
+    }
+
+    // file path for api access to handle when api should be called or not
     char filepath[] = "/home/strayker/.config/weather/last_access\0";
 
     FILE *fp = fopen(filepath, "a+");
@@ -13,7 +24,7 @@ int check_last_api_access_weather(prayers_t *prayer_times){
     // Error handling checking valid file pointer
     if(fp == NULL){
 
-        fprintf(stderr, "ERROR Reading Weather File");
+        fprintf(stderr, "ERROR Reading Weather last_access File");
         return -1;
     }
 

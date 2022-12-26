@@ -23,5 +23,5 @@
 // Intervall Api Access
 #define API_INTERVALL 40
 
-#define API_INTERVALL_hijri 60 * 5
+#define API_INTERVALL_hijri 40
 #endif
