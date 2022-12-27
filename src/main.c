@@ -12,15 +12,15 @@ int main(int argc, char **argv){
 
     // Manual API Call Initiation 
     char api_call_make[] = "make -f /home/strayker/Coding/044_prayertimes/Makefile api_call\0";
-    char hijri_api_call_make[] = "make -f /home/strayker/Coding/044_prayertimes/Makefile hijri_api_call\0";
+    char hard_reset[]    = "make -f /home/strayker/Coding/044_prayertimes/Makefile reset\0";
     
     if((argc > 1)&&(strcmp(argv[1], "API_CALL") == 0)){
 
         system(api_call_make);
     }
-    if((argc > 1)&&(strcmp(argv[1], "HIJRI_API_CALL") == 0)){
+    if((argc > 1)&&(strcmp(argv[1], "reset") == 0)){
 
-        system(hijri_api_call_make);
+        system(hard_reset);
     }
 
     // Instantiate prayer_times for storing 5 prayer times of the day
