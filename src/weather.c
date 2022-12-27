@@ -97,7 +97,7 @@ int retrieve_weather(prayers_t *prayer_times){
         pclose(proc_ptr); proc_ptr = NULL;
     
         WHT;
-        printf("Info: API Call initiated, minimum API period exceeded\n");
+        printf("Info: Weather API Call initiated, minimum API period exceeded\n");
         RESET_COLOUR;
         
         // If API Call is valid create the file with rw permissions and 
